@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
 
-<BorderPane xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="id.kelompok1.pbo.polymorp_obj.MainController"
-            fx:id="rootPane">
-
-    <!-- Konten di sini -->
-
-</BorderPane>
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="id.kelompok1.pbo.polymorp_obj.MainController"
+           fx:id="rootPane"
+           prefWidth="1400" prefHeight="800"
+           style="-fx-background-color: linear-gradient(to bottom, #f5f5f5, #e0e0e0);">
+</StackPane>

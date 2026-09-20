@@ -1,43 +1,35 @@
 package id.kelompok1.pbo.polymorp_obj;
 
+import id.kelompok1.pbo.polymorp_obj.util.FontLoader;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCombination;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class PolymorphismApp extends Application {
 
-    private static final double WINDOW_SCALE = 0.85;
-    private static final double ASPECT_RATIO = 16.0 / 9.0;
-
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(
-                PolymorphismApp.class.getResource("main-view.fxml")
-        );
+        // Muat font sebelum UI dibuat
+        FontLoader.loadAll();
 
-        Rectangle2D screen = Screen.getPrimary().getVisualBounds();
-        double w = screen.getWidth() * WINDOW_SCALE;
-        double h = w / ASPECT_RATIO;
+        FXMLLoader loader = new FXMLLoader(
+                PolymorphismApp.class.getResource("main-view.fxml"));
 
-        if (h > screen.getHeight() * WINDOW_SCALE) {
-            h = screen.getHeight() * WINDOW_SCALE;
-            w = h * ASPECT_RATIO;
-        }
-
-        Scene scene = new Scene(fxmlLoader.load(), w, h);
+        // Ukuran awal (dipakai sebelum maximize)
+        Scene scene = new Scene(loader.load(), 1280, 720);
 
         stage.setTitle("Polymorphism Edu");
         stage.setScene(scene);
-        stage.centerOnScreen();
 
-        // F11 untuk toggle fullscreen
+        // ── Kunci utama: langsung maximize saat start ──
+        stage.setMaximized(true);
+
+        // F11 toggle fullscreen
         scene.getAccelerators().put(
                 KeyCombination.keyCombination("F11"),
                 () -> stage.setFullScreen(!stage.isFullScreen())
