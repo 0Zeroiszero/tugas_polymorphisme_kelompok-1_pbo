@@ -65,7 +65,7 @@ public class MainController {
                 "Kendaraan",
                 new String[]{"Kendaraan::bergerak", "Kendaraan::isiBensin"},
                 new ClassCard.Item[]{
-                        new ClassCard.Item("Mobil", "mobil_2d-point.png",
+                        new ClassCard.Item("Mobil", "mobil.png",
                                 () -> bukaDetailKendaraan("Mobil",
                                         "background_mobil_motor.jpeg",
                                         "mobil_2d-point.png")),
