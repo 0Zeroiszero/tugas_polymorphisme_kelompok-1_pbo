@@ -268,15 +268,42 @@ public class DetailPage extends StackPane {
     // TOMBOL ORANYE
     // ──────────────────────────────────────────────────────────
 
+    /**
+     * Versi default (5 argumen) — tombol oranye seperti biasa.
+     * Dipakai oleh KENDARAAN.
+     */
     public Button addOrangeButton(String label,
                                   double xPersen, double yPersen,
                                   double wPersen, double hPersen) {
-        Button btn = new Button(label);
-        applyOrangeNormal(btn);
-        btn.setCursor(Cursor.HAND);
+        return addOrangeButton(label, xPersen, yPersen, wPersen, hPersen, false);
+    }
 
-        btn.setOnMouseEntered(e -> applyOrangeHover(btn));
-        btn.setOnMouseExited(e -> applyOrangeNormal(btn));
+    /**
+     * Versi dengan opsi transparan (6 argumen).
+     * @param transparent true = tombol tak terlihat (hanya area klik),
+     *                    false = tombol oranye seperti biasa.
+     * Dipakai oleh HEWAN (transparent = true).
+     */
+    public Button addOrangeButton(String label,
+                                  double xPersen, double yPersen,
+                                  double wPersen, double hPersen,
+                                  boolean transparent) {
+        Button btn = new Button(label);
+
+        if (transparent) {
+            btn.setStyle(
+                    "-fx-background-color: transparent;" +
+                            "-fx-border-color: transparent;" +
+                            "-fx-text-fill: transparent;" +
+                            "-fx-cursor: hand;"
+            );
+            btn.setCursor(Cursor.HAND);
+        } else {
+            applyOrangeNormal(btn);
+            btn.setCursor(Cursor.HAND);
+            btn.setOnMouseEntered(e -> applyOrangeHover(btn));
+            btn.setOnMouseExited(e -> applyOrangeNormal(btn));
+        }
 
         btn.prefWidthProperty().bind(overlay.widthProperty().multiply(wPersen));
         btn.prefHeightProperty().bind(overlay.heightProperty().multiply(hPersen));

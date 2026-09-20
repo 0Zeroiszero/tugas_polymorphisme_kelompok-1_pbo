@@ -205,17 +205,16 @@ public class MainController {
             submenuKiri = false;
         }
 
-        Button anchor = detail.addOrangeButton("Lihat Penjelasan", x, y, w, h);
+        // Tombol transparan
+        Button anchor = detail.addOrangeButton("OPSI", x, y, w, h, true);
 
-        // Kedua menu hanya memutar suara, tanpa dialog
         detail.showSubmenuOn(anchor, submenuKiri,
-                () -> {                                          // 🔊 Bersuara
+                () -> {                                        // 🔊 Bersuara
                     detail.showToast("Memainkan suara...");
-                    detail.playSound();
+                    detail.playSound();                        // ← suara HANYA di sini
                 },
-                () -> {                                          // ℹ Informasi
-                    detail.playSound();
-                    tampilInformasi(jenis);
+                () -> {                                        // ℹ Informasi
+                    tampilInformasi(jenis);                    // ← TIDAK ada playSound()
                 }
         );
 
