@@ -1,5 +1,6 @@
 package id.kelompok1.pbo.polymorp_obj;
 
+import id.kelompok1.pbo.polymorp_obj.ui.CeritaPage;
 import id.kelompok1.pbo.polymorp_obj.ui.IsiBensinPage;
 import id.kelompok1.pbo.polymorp_obj.model.*;
 import id.kelompok1.pbo.polymorp_obj.ui.ClassCard;
@@ -79,7 +80,45 @@ public class MainController {
         HBox cards = new HBox(50, cardHewan, cardKendaraan);
         cards.setAlignment(Pos.CENTER);
 
-        VBox konten = new VBox(28, judul, subJudul, cards);
+        // ── Tombol Alur Cerita (fitur baru: satu frame, satu kisah) ──
+        Button btnCerita = new Button("▶  Tonton Alur Cerita");
+        btnCerita.setStyle(
+                "-fx-font-family: '" + FONT + "';" +
+                        "-fx-background-color: rgba(255, 152, 0, 0.9);" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: 700;" +
+                        "-fx-font-size: 16px;" +
+                        "-fx-padding: 12 30 12 30;" +
+                        "-fx-background-radius: 16;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(245,124,0,0.5), 16, 0.3, 0, 5);"
+        );
+        btnCerita.setCursor(Cursor.HAND);
+        btnCerita.setOnMouseEntered(e -> btnCerita.setStyle(
+                "-fx-font-family: '" + FONT + "';" +
+                        "-fx-background-color: #f57c00;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: 700;" +
+                        "-fx-font-size: 16px;" +
+                        "-fx-padding: 12 30 12 30;" +
+                        "-fx-background-radius: 16;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(245,124,0,0.7), 20, 0.3, 0, 6);"
+        ));
+        btnCerita.setOnMouseExited(e -> btnCerita.setStyle(
+                "-fx-font-family: '" + FONT + "';" +
+                        "-fx-background-color: rgba(255, 152, 0, 0.9);" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-weight: 700;" +
+                        "-fx-font-size: 16px;" +
+                        "-fx-padding: 12 30 12 30;" +
+                        "-fx-background-radius: 16;" +
+                        "-fx-cursor: hand;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(245,124,0,0.5), 16, 0.3, 0, 5);"
+        ));
+        btnCerita.setOnAction(e -> bukaCerita());
+
+        VBox konten = new VBox(28, judul, subJudul, cards, btnCerita);
         konten.setAlignment(Pos.CENTER);
 
         // ── Tombol Keluar (pojok kanan atas) ─────────────────
@@ -137,6 +176,15 @@ public class MainController {
         StackPane.setMargin(btnExit, new Insets(20));
 
         rootPane.getChildren().addAll(konten, btnExit);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // ALUR CERITA (satu frame)
+    // ──────────────────────────────────────────────────────────
+    private void bukaCerita() {
+        CeritaPage cerita = new CeritaPage(this::tampilkanLanding);
+        rootPane.getChildren().setAll(cerita);
+        cerita.putar();
     }
 
     private void tampilInformasi(String jenis) {
