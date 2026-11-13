@@ -8,6 +8,6 @@ public class Motor extends Kendaraan {
 
     @Override
     public String isiBensin() {
-        return "mengisi Pertalite sebanyak 10 liter di SPBU";
+        return "mengisi Pertamax 92 sebanyak 10 liter di SPBU";
     }
 }

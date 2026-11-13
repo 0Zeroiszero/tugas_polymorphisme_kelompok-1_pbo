@@ -35,17 +35,19 @@ public class SnapshotRunner extends Application {
     private static final Object[][] TITIK = {
             { 2.5,  "a1-taman-awal" },
             { 6.5,  "a1-taman-meong" },
-            { 11.8, "a1-burung-melintas" },
+            { 9.0,  "a1-burung-terbang" },
             { 16.5, "a2-burung-ramai" },
             { 21.5, "a2-burung-coba-terbang" },
             { 24.5, "a2-burung-naik" },
             { 28.6, "a3-motor-laju" },
             { 33.4, "a3-mobil-lewat" },
             { 41.5, "a4-spbu-masuk" },
-            { 44.8, "a4-pengendara-turun" },
-            { 47.5, "a4-isi-bersama" },
+            { 44.8, "a4-npc-lintas-isi" },
+            { 47.5, "a4-npc-kedua" },
             { 52.0, "a5-struk" },
-            { 55.0, "a6-selesai" },
+            { 58.3, "a6-berangkat" },
+            { 64.8, "a7-fade-hitam" },
+            { 68.0, "a8-cerita-berakhir" },
     };
 
     @Override
@@ -79,15 +81,15 @@ public class SnapshotRunner extends Application {
                     e -> jepret(scene, nama)));
         }
         // tutup aplikasi setelah snapshot terakhir
-        jadwal.getKeyFrames().add(new KeyFrame(Duration.seconds(58),
+        jadwal.getKeyFrames().add(new KeyFrame(Duration.seconds(69),
                 e -> {
                     System.out.println("[SNAPSHOT] selesai — keluar");
                     Platform.exit();
                 }));
         jadwal.play();
 
-        // pengaman: keluar paksa setelah 70 detik
-        Timeline pengaman = new Timeline(new KeyFrame(Duration.seconds(70),
+        // pengaman: keluar paksa setelah 85 detik
+        Timeline pengaman = new Timeline(new KeyFrame(Duration.seconds(85),
                 e -> Platform.exit()));
         pengaman.play();
     }
@@ -190,6 +192,8 @@ public class SnapshotRunner extends Application {
                             : "")
                             + " fitH=" + (iv != null ? iv.getFitHeight() : -1)
                             + " lay=(" + n.getLayoutX() + "," + n.getLayoutY() + ")"
+                            + " tr=(" + n.getTranslateX() + "," + n.getTranslateY() + ")"
+                            + " sx=" + n.getScaleX()
                             + " bounds=" + n.getLayoutBounds().getWidth() + "x"
                             + n.getLayoutBounds().getHeight()
                             + " vis=" + n.isVisible() + " op=" + n.getOpacity());
