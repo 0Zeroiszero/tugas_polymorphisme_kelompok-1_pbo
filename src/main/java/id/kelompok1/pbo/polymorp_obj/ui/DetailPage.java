@@ -493,11 +493,14 @@ public class DetailPage extends StackPane {
             toggleVehicle();
             updateBergerakStyle.run();
 
-            // ── Suara mengikuti status gerak ─────────────────
-            if (vehicleMoving) {
-                playSoundLoop();     // mulai bergerak → putar suara (loop)
-            } else {
-                stopSound();         // berhenti → hentikan suara
+            // Suara hanya dikontrol jika halaman menyediakan audio.
+            // Halaman Mobil tidak memiliki soundPath sehingga tidak memanggil audio.
+            if (soundPath != null) {
+                if (vehicleMoving) {
+                    playSoundLoop();
+                } else {
+                    stopSound();
+                }
             }
         });
 
