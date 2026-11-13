@@ -235,8 +235,8 @@ public class DetailPage extends StackPane {
         );
         btnBack.setCursor(Cursor.HAND);
         btnBack.setOnAction(e -> {
-            stopSound();
-            stopVehicle();// ← lepas MediaPlayer sebelum keluar
+            if (soundPath != null) stopSound();
+            stopVehicle();
             onBack.run();
         });
         StackPane.setAlignment(btnBack, Pos.TOP_LEFT);
@@ -493,11 +493,14 @@ public class DetailPage extends StackPane {
             toggleVehicle();
             updateBergerakStyle.run();
 
-            // ── Suara mengikuti status gerak ─────────────────
-            if (vehicleMoving) {
-                playSoundLoop();     // mulai bergerak → putar suara (loop)
-            } else {
-                stopSound();         // berhenti → hentikan suara
+            // Suara hanya dikontrol jika halaman menyediakan audio.
+            // Halaman Mobil tidak memiliki soundPath sehingga tidak memanggil audio.
+            if (soundPath != null) {
+                if (vehicleMoving) {
+                    playSoundLoop();
+                } else {
+                    stopSound();
+                }
             }
         });
 
@@ -577,8 +580,8 @@ public class DetailPage extends StackPane {
 
         bIsiBensin.setOnAction(e -> {
             hideSubmenu.run();
-            stopSound();
-            stopVehicle();// ← lepas MediaPlayer agar tidak lock file
+            if (soundPath != null) stopSound();
+            stopVehicle();
             onIsiBensin.run();
         });
 
