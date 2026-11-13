@@ -43,7 +43,7 @@ import java.util.Map;
  *            burung cuit-cuit (burung diduplikasi di bawahnya).
  *            Burung mencoba terbang → adegan berpindah ke jalan raya.
  * Adegan 3 : Pengendara motor melaju kencang (gambar seq + suara motor),
- *            disusul mobil yang lewat (gambar seq + suara mobil).
+ *            disusul mobil yang lewat tanpa audio.
  * Adegan 4 : Motor dan mobil mengisi bensin self-service di SPBU
  *            (pengendara turun dari motor), lalu struk bukti bayar
  *            ditampilkan sebagai gambar hasil generate.
@@ -69,8 +69,6 @@ public class CeritaPage extends StackPane {
     // Referensi adegan SPBU / ending (untuk tahap berangkat & fade out)
     private Pane panelStruk;
     private ImageView pemotorSpbu;
-    private ImageView npc1;
-    private ImageView npc2;
     private Pane lapisHitam;
     private VBox teksAkhir;
 
@@ -802,10 +800,7 @@ public class CeritaPage extends StackPane {
                             adegan.getChildren().add(mobil);
                             progresSeq(mobil, seqMobil, 700);
                             melintas(mobil, -w * 1.45, 3.4);
-                            mainkanLoop("porsche.wav");
-                        },
-                        // mobil sudah lewat: suara berhenti
-                        () -> hentikanSuara("porsche.wav")
+                        }
                 }
         );
         // perpindahan ke SPBU ditangani jadwal utama (detik ke-38)
@@ -831,15 +826,6 @@ public class CeritaPage extends StackPane {
         double w = overlay.getWidth();
 
         adegan.getChildren().add(latar(bg("spbu.jpeg")));
-
-        // ── Mobil NPC (lalu lintas SPBU, TANPA suara) ─────────
-        // dibuat SEKARANG agar z-order-nya: di atas latar, DI BAWAH
-        // kendaraan utama & seluruh UI (progress bar / struk).
-        npc1 = spriteLaju("npc-avanza.png", 0.13, 0.665, false);
-        npc1.setLayoutX(w * 1.03);
-        npc2 = spriteLaju("npc-pajero.png", 0.115, 0.615, false);
-        npc2.setLayoutX(w * 1.03);
-        adegan.getChildren().addAll(npc1, npc2);
 
         // Kendaraan masuk dari kiri, berhenti di pom (perlambatan halus).
         // layoutX diletakkan berdasarkan PUSAT kendaraan agar berhenti tepat.
@@ -878,7 +864,7 @@ public class CeritaPage extends StackPane {
 
         // ── Jadwal internal adegan 4 ──────────────────────────
         jadwal(
-                new double[]{ 3.4, 4.8, 5.2, 7.2 },
+                new double[]{ 3.4, 4.8 },
                 new Runnable[]{
                         // pengendara TURUN dari motor (motor jadi kosong),
                         // lalu berdiri tegak DI SAMPING POM SPBU-nya
@@ -901,10 +887,6 @@ public class CeritaPage extends StackPane {
                             barMotor.isi(5.0);
                             barMobil.isi(5.0);
                         },
-                        // NPC 1 melintas masuk frame saat bensin diisi…
-                        () -> melintas(npc1, -w * 1.45, 4.4),
-                        // …NPC 2 menyusul, lalu keduanya keluar satu per satu
-                        () -> melintas(npc2, -w * 1.45, 4.2)
                 }
         );
         // struk ditampilkan jadwal utama, setelah pengisian selesai
@@ -924,7 +906,6 @@ public class CeritaPage extends StackPane {
 
     private void tahapStruk() {
         hentikanSuara("motor.wav");
-        hentikanSuara("porsche.wav");
 
         // Hapus progress bar (pengisian sudah selesai)
         adegan.getChildren().removeIf(n -> n instanceof ProgressBarCerita);
