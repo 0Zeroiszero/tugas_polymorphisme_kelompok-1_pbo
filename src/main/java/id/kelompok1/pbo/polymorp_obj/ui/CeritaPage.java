@@ -767,7 +767,7 @@ public class CeritaPage extends StackPane {
 
         // ── Jadwal internal adegan 3 ──────────────────────────
         jadwal(
-                new double[]{ 0.4, 0.9, 4.6, 5.0, 9.2 },
+                new double[]{ 0.4, 0.9, 4.6, 5.0 },
                 new Runnable[]{
                         // motor melaju dari kiri ke kanan: seq idle -> seq akhir,
                         // pose terakhir DITAHAN sampai keluar frame (konsisten)
