@@ -11,9 +11,12 @@ import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
@@ -21,6 +24,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Polygon;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
@@ -61,6 +65,14 @@ public class CeritaPage extends StackPane {
     private final List<Timeline> animasiAktif = new ArrayList<>();
     private final List<javafx.animation.Animation> transisiAktif = new ArrayList<>();
     private final Map<String, Image> cacheGambar = new HashMap<>();
+
+    // Referensi adegan SPBU / ending (untuk tahap berangkat & fade out)
+    private Pane panelStruk;
+    private ImageView pemotorSpbu;
+    private ImageView npc1;
+    private ImageView npc2;
+    private Pane lapisHitam;
+    private VBox teksAkhir;
 
     public CeritaPage(Runnable onBack) {
         this.onBack = onBack;
@@ -143,7 +155,7 @@ public class CeritaPage extends StackPane {
     /** Mulai memutar alur cerita dari adegan 1 (dipanggil saat halaman tampil). */
     public void putar() {
         berhentiSemua();
-        btnUlangi.setVisible(false);
+        bersihkanAkhir();
         adegan.getChildren().clear();
         adegan.setOpacity(0);
 
@@ -157,7 +169,9 @@ public class CeritaPage extends StackPane {
                     new KeyFrame(Duration.seconds(26.5), e -> adeganJalan()),
                     new KeyFrame(Duration.seconds(38.0), e -> adeganSpbu()),
                     new KeyFrame(Duration.seconds(49.5), e -> tahapStruk()),
-                    new KeyFrame(Duration.seconds(56.0), e -> selesaiCerita())
+                    new KeyFrame(Duration.seconds(57.0), e -> tahapBerangkat()),
+                    new KeyFrame(Duration.seconds(63.0), e -> akhiriDenganFade()),
+                    new KeyFrame(Duration.seconds(66.5), e -> selesaiCerita())
             );
             master.play();
             transisiAktif.add(master);
@@ -168,13 +182,16 @@ public class CeritaPage extends StackPane {
     /** Tombol "Lewati ke SPBU": hentikan adegan sekarang, lompat ke adegan 4. */
     private void lompatKeSpbu() {
         berhentiSemua();
+        bersihkanAkhir();
         adegan.getChildren().clear();
         adegan.setOpacity(0);
         Runnable mulai = () -> {
             master = new Timeline(
                     new KeyFrame(Duration.seconds(0.0),  e -> adeganSpbu()),
                     new KeyFrame(Duration.seconds(11.5), e -> tahapStruk()),
-                    new KeyFrame(Duration.seconds(18.0), e -> selesaiCerita())
+                    new KeyFrame(Duration.seconds(18.5), e -> tahapBerangkat()),
+                    new KeyFrame(Duration.seconds(24.5), e -> akhiriDenganFade()),
+                    new KeyFrame(Duration.seconds(28.0), e -> selesaiCerita())
             );
             master.play();
             transisiAktif.add(master);
@@ -187,6 +204,16 @@ public class CeritaPage extends StackPane {
                 + "Itulah POLIMORFISME. Tekan \"Putar Ulang\" untuk menonton lagi.");
         btnUlangi.setVisible(true);
         btnUlangi.toFront();
+    }
+
+    /** Hapus efek ending (lapis hitam + tulisan tengah) sebelum memutar ulang. */
+    private void bersihkanAkhir() {
+        if (lapisHitam != null) {
+            getChildren().removeAll(lapisHitam, teksAkhir);
+            lapisHitam = null;
+            teksAkhir = null;
+        }
+        btnUlangi.setVisible(false);
     }
 
     /** Hentikan seluruh animasi, suara, dan penjadwal. */
@@ -421,6 +448,49 @@ public class CeritaPage extends StackPane {
         return t;
     }
 
+    /**
+     * Burung TERBANG melintas: pose sayap terangkat, badan sedikit menunduk
+     * ke depan, jalur naik-turun melengkung (dua gelombang) — jelas terlihat
+     * melayang terbang, bukan hinggap diam.
+     */
+    private void terbangLintas(ImageView burung, double jarakPx, double detik,
+                               double ayunPx) {
+        burung.setRotate(-6);
+        melintas(burung, jarakPx, detik);
+        Timeline gelombang = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(burung.translateYProperty(), 0)),
+                new KeyFrame(Duration.seconds(detik * 0.25),
+                        new KeyValue(burung.translateYProperty(), -ayunPx,
+                                Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.seconds(detik * 0.5),
+                        new KeyValue(burung.translateYProperty(), 0,
+                                Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.seconds(detik * 0.75),
+                        new KeyValue(burung.translateYProperty(), -ayunPx * 0.6,
+                                Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.seconds(detik),
+                        new KeyValue(burung.translateYProperty(), 0,
+                                Interpolator.EASE_BOTH))
+        );
+        // sedikit goyangan rotasi agar kesan melayang lebih hidup
+        Timeline oleng = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(burung.rotateProperty(), -6)),
+                new KeyFrame(Duration.seconds(detik * 0.25),
+                        new KeyValue(burung.rotateProperty(), 2, Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.seconds(detik * 0.5),
+                        new KeyValue(burung.rotateProperty(), -6, Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.seconds(detik * 0.75),
+                        new KeyValue(burung.rotateProperty(), 2, Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.seconds(detik),
+                        new KeyValue(burung.rotateProperty(), -6, Interpolator.EASE_BOTH))
+        );
+        gelombang.play();
+        oleng.play();
+        track(gelombang);
+        track(oleng);
+    }
+
     private void mainkanSekali(String fileSuara) {
         SoundManager.playOnce(SOUND_BASE + fileSuara);
     }
@@ -498,13 +568,12 @@ public class CeritaPage extends StackPane {
         jadwal(
                 new double[]{ 0.2, 5.0, 6.6, 8.0 },
                 new Runnable[]{
-                        // burung melintas di langit → menandai perpindahan adegan
+                        // burung TERBANG melintas di langit → menandai perpindahan adegan
                         () -> {
-                            ImageView burung = spriteTetap("burung-diam.png",
-                                    0.07, 1.10, 0.16, false);
+                            ImageView burung = spriteTetap("burung-ingin-terbang.png",
+                                    0.075, 1.10, 0.16, false);
                             adegan.getChildren().add(burung);
-                            bobbing(burung, 8, 260);
-                            melintas(burung, -w * 1.25, 2.6);
+                            terbangLintas(burung, -w * 1.30, 3.2, w * 0.045);
                         },
                         // kucing utama berhenti dan MENGEEONG SEKALI
                         () -> {
@@ -512,16 +581,15 @@ public class CeritaPage extends StackPane {
                             bobUtama.stop();
                             kucingUtama.setTranslateY(0);
                             mainkanSekali("kucing.wav");
-                            tampilkanBalon("meong", kucingUtama, 0.26);
+                            tampilkanBalon("Meong!", kucingUtama);
                         },
                         () -> kucingUtama.setImage(gambar("kucing-duduk.png")),
                         // burung terbang mendekat — adegan akan berpindah
                         () -> {
-                            ImageView burung2 = spriteTetap("burung-diam.png",
+                            ImageView burung2 = spriteTetap("burung-ingin-terbang.png",
                                     0.10, 1.12, 0.30, true);
                             adegan.getChildren().add(burung2);
-                            bobbing(burung2, 10, 240);
-                            melintas(burung2, -w * 1.67, 1.6);
+                            terbangLintas(burung2, -w * 1.70, 2.2, w * 0.035);
                         }
                 }
         );
@@ -620,11 +688,11 @@ public class CeritaPage extends StackPane {
                 new Runnable[]{
                         () -> { // cuit pertama
                             mainkanSekali("burung.wav");
-                            tampilkanBalon("cuit", burungUtama, 0.22);
+                            tampilkanBalon("Cuit! Cuit!", burungUtama);
                         },
                         () -> { // cuit kedua — kawanan ikut ramai
                             mainkanSekali("burung.wav");
-                            tampilkanBalon("cuit", burungUtama, 0.22);
+                            tampilkanBalon("Cuit! Cuit!", burungUtama);
                         },
                         // burung melihat ke atas — mulai berniat terbang
                         () -> burungUtama.setImage(gambar("burung-antisipasi.png")),
@@ -764,6 +832,15 @@ public class CeritaPage extends StackPane {
 
         adegan.getChildren().add(latar(bg("spbu.jpeg")));
 
+        // ── Mobil NPC (lalu lintas SPBU, TANPA suara) ─────────
+        // dibuat SEKARANG agar z-order-nya: di atas latar, DI BAWAH
+        // kendaraan utama & seluruh UI (progress bar / struk).
+        npc1 = spriteLaju("npc-avanza.png", 0.13, 0.665, false);
+        npc1.setLayoutX(w * 1.03);
+        npc2 = spriteLaju("npc-pajero.png", 0.115, 0.615, false);
+        npc2.setLayoutX(w * 1.03);
+        adegan.getChildren().addAll(npc1, npc2);
+
         // Kendaraan masuk dari kiri, berhenti di pom (perlambatan halus).
         // layoutX diletakkan berdasarkan PUSAT kendaraan agar berhenti tepat.
         double tinggiMotor = overlay.getHeight() * 0.26;
@@ -801,7 +878,7 @@ public class CeritaPage extends StackPane {
 
         // ── Jadwal internal adegan 4 ──────────────────────────
         jadwal(
-                new double[]{ 3.4, 4.8 },
+                new double[]{ 3.4, 4.8, 5.2, 7.2 },
                 new Runnable[]{
                         // pengendara TURUN dari motor (motor jadi kosong),
                         // lalu berdiri tegak DI SAMPING POM SPBU-nya
@@ -811,20 +888,26 @@ public class CeritaPage extends StackPane {
                                     0.26, 0.44, 0.975, false);
                             pemotor.setOpacity(0);
                             adegan.getChildren().add(pemotor);
+                            pemotorSpbu = pemotor;
                             fadeMuncul(pemotor);
                         },
-                        // KEDUA pengisian berjalan BERSAMAAN (proses sama)
+                        // KEDUA pengisian berjalan BERSAMAAN (proses sama,
+                        // harga per liter sama)
                         () -> {
                             barMotor = tambahProgressBar(motorSpbu,
-                                    "Motor • Pertalite • Self-Service", 0.115);
+                                    "Motor • Pertamax 92 • Self-Service", 0.115);
                             barMobil = tambahProgressBar(mobilSpbu,
                                     "Mobil • Pertamax 92 • Self-Service", 0.115);
                             barMotor.isi(5.0);
                             barMobil.isi(5.0);
-                        }
+                        },
+                        // NPC 1 melintas masuk frame saat bensin diisi…
+                        () -> melintas(npc1, -w * 1.45, 4.4),
+                        // …NPC 2 menyusul, lalu keduanya keluar satu per satu
+                        () -> melintas(npc2, -w * 1.45, 4.2)
                 }
         );
-        // struk ditampilkan jadwal utama (detik ke-49.5), setelah pengisian selesai
+        // struk ditampilkan jadwal utama, setelah pengisian selesai
     }
 
     private void fadeMuncul(Node n) {
@@ -846,21 +929,24 @@ public class CeritaPage extends StackPane {
         // Hapus progress bar (pengisian sudah selesai)
         adegan.getChildren().removeIf(n -> n instanceof ProgressBarCerita);
 
-        setCaption("Pengisian selesai! Inilah struk pembayaran — bukti bayar self-service "
-                + "dengan harga SPBU yang sama.");
+        setCaption("Pengisian selesai! Inilah struk pembayaran — bukti bayar "
+                + "self-service dengan HARGA SAMA Rp 13.900/liter.");
 
-        // Lapisan redup agar struk menonjol
+        // Lapis redup cukup gelap agar tulisan latar (papan harga) tidak
+        // bertabrakan dengan tulisan struk — tidak ada teks yang overlap.
         Region redup = new Region();
-        redup.setStyle("-fx-background-color: rgba(8, 10, 14, 0.55);");
+        redup.setStyle("-fx-background-color: rgba(8, 10, 14, 0.76);");
         redup.setMouseTransparent(true);
         redup.layoutXProperty().bind(adegan.widthProperty().multiply(0));
         redup.layoutYProperty().bind(adegan.heightProperty().multiply(0));
         redup.prefWidthProperty().bind(adegan.widthProperty());
         redup.prefHeightProperty().bind(adegan.heightProperty());
 
-        // Struk motor (kiri) dan struk mobil (kanan) — gambar hasil generate
-        ImageView strukMotor = strukView("struk-motor.png", 0.62, 0.26);
-        ImageView strukMobil = strukView("struk-mobil.png", 0.62, 0.74);
+        // Struk motor (kiri) dan struk mobil (kanan) — gambar hasil generate,
+        // ukuran/posisi sama agar sejajar rapi, TEPAT DI BAWAH papan harga
+        // sehingga tidak ada tulisan yang tertimpa.
+        ImageView strukMotor = strukView("struk-motor.png", 0.50, 0.32, 0.26);
+        ImageView strukMobil = strukView("struk-mobil.png", 0.50, 0.68, 0.26);
 
         Label judulStruk = new Label("BUKTI PEMBAYARAN — SELF-SERVICE (harga sama)");
         judulStruk.setFont(Font.font(FONT_MAIN, FontWeight.BOLD, 17));
@@ -871,9 +957,9 @@ public class CeritaPage extends StackPane {
                         "-fx-padding: 8 20 8 20;");
         judulStruk.layoutXProperty().bind(adegan.widthProperty().divide(2)
                 .subtract(judulStruk.widthProperty().divide(2)));
-        judulStruk.layoutYProperty().bind(adegan.heightProperty().multiply(0.05));
+        judulStruk.layoutYProperty().bind(adegan.heightProperty().multiply(0.085));
 
-        Pane panelStruk = new Pane(redup, strukMotor, strukMobil, judulStruk);
+        panelStruk = new Pane(redup, strukMotor, strukMobil, judulStruk);
         panelStruk.setPickOnBounds(false);
         panelStruk.setOpacity(0);
         adegan.getChildren().add(panelStruk);
@@ -885,13 +971,14 @@ public class CeritaPage extends StackPane {
         trackAnimasi(muncul);
     }
 
-    /** Struk sebagai ImageView (gambar), tinggi & pusat-x dalam persentase. */
-    private ImageView strukView(String file, double tinggiPersen, double xPersen) {
+    /** Struk sebagai ImageView (gambar), tinggi/pusat-x/atas-y dalam persentase. */
+    private ImageView strukView(String file, double tinggiPersen,
+                                double xPersen, double yPersen) {
         ImageView iv = new ImageView(gambar(file));
         iv.setPreserveRatio(true);
         iv.setSmooth(true);
         iv.fitHeightProperty().bind(adegan.heightProperty().multiply(tinggiPersen));
-        iv.layoutYProperty().bind(adegan.heightProperty().multiply(0.16));
+        iv.layoutYProperty().bind(adegan.heightProperty().multiply(yPersen));
         Double rasio = rasioLebar(iv);
         if (rasio != null) {
             iv.layoutXProperty().bind(adegan.widthProperty().multiply(xPersen)
@@ -904,36 +991,168 @@ public class CeritaPage extends StackPane {
     }
 
     // ══════════════════════════════════════════════════════════
-    // BALON UCAPAN (gambar generate + teks) & PROGRESS BAR
+    // BERANGKAT + ENDING (fade out hitam, tulisan tengah layar)
     // ══════════════════════════════════════════════════════════
 
-    /** Balon ucapan gambar hasil generate ("Meong!" / "Cuit!"), muncul di atas acuan. */
-    private void tampilkanBalon(String jenis, ImageView acuan, double tinggiPersen) {
-        ImageView balon = new ImageView(gambar("balon-" + jenis + ".png"));
-        balon.setPreserveRatio(true);
-        balon.setSmooth(true);
-        balon.setMouseTransparent(true);
-        balon.fitHeightProperty().bind(adegan.heightProperty().multiply(tinggiPersen));
-        Double rasio = rasioLebar(balon);
+    /**
+     * Pengisian selesai: struk ditutup, pengendara naik motor lagi, motor dan
+     * mobil DIFLIP menghadap arah keluar lalu melaju MELAWAN arah masuk
+     * (motor masuk dari kiri → keluar ke kiri; mobil masuk dari kanan →
+     * keluar ke kanan).
+     */
+    private void tahapBerangkat() {
+        setCaption("Isi selesai! Motor dan mobil kembali berangkat "
+                + "melanjutkan perjalanan masing-masing.");
 
-        ImageView acuanRef = acuan;
-        if (rasio != null) {
-            balon.layoutXProperty().bind(
-                    acuanRef.layoutXProperty()
-                            .add(acuanRef.translateXProperty())
-                            .add(acuanRef.fitHeightProperty()
-                                    .multiply(rasioLebar(acuanRef) == null ? 0 : rasioLebar(acuanRef))
-                                    .divide(2))
-                            .subtract(balon.fitHeightProperty().multiply(rasio).divide(2)));
-        } else {
-            balon.layoutXProperty().bind(
-                    acuanRef.layoutXProperty().add(acuanRef.translateXProperty()));
+        // Tutup panel struk dengan fade
+        if (panelStruk != null) {
+            final Pane panelLama = panelStruk;
+            FadeTransition tutup = new FadeTransition(Duration.millis(700), panelLama);
+            tutup.setFromValue(1);
+            tutup.setToValue(0);
+            tutup.setOnFinished(e -> adegan.getChildren().remove(panelLama));
+            tutup.play();
+            trackAnimasi(tutup);
+            panelStruk = null;
         }
-        balon.layoutYProperty().bind(
-                acuanRef.layoutYProperty().add(acuanRef.translateYProperty())
-                        .subtract(balon.fitHeightProperty()).subtract(6));
 
+        double w = overlay.getWidth();
+        double h = overlay.getHeight();
+
+        // Pengendara naik kembali ke motor
+        if (pemotorSpbu != null) {
+            final ImageView pemotorLama = pemotorSpbu;
+            FadeTransition naik = new FadeTransition(Duration.millis(450), pemotorLama);
+            naik.setFromValue(1);
+            naik.setToValue(0);
+            naik.setOnFinished(e -> adegan.getChildren().remove(pemotorLama));
+            naik.play();
+            trackAnimasi(naik);
+            pemotorSpbu = null;
+            motorSpbu.setImage(gambar("motor-diam.png")); // pengendara kembali di atas motor
+        }
+
+        // FLIP: motor (tadi menghadap kanan) → menghadap kiri;
+        // mobil (tadi menghadap kiri) → menghadap kanan
+        motorSpbu.setScaleX(-1);
+        mobilSpbu.setScaleX(-1);
+
+        // Motor keluar ke KIRI (melawan arah masuk), makin cepat
+        Image imMotor = gambar("motor-diam.png");
+        double lebarMotor = imMotor == null ? w * 0.3
+                : h * 0.26 * imMotor.getWidth() / imMotor.getHeight();
+        TranslateTransition keluarMotor = new TranslateTransition(Duration.seconds(2.8), motorSpbu);
+        keluarMotor.setFromX(motorSpbu.getTranslateX());
+        keluarMotor.setToX(-(lebarMotor + w * 0.10) - motorSpbu.getLayoutX());
+        keluarMotor.setInterpolator(Interpolator.EASE_IN);
+        keluarMotor.setDelay(Duration.seconds(0.2));
+        keluarMotor.play();
+        trackAnimasi(keluarMotor);
+
+        // Mobil keluar ke KANAN (melawan arah masuk), menyusul sesudahnya
+        Image imMobil = gambar("mobil-diam.png");
+        double lebarMobil = imMobil == null ? w * 0.3
+                : h * 0.22 * imMobil.getWidth() / imMobil.getHeight();
+        TranslateTransition keluarMobil = new TranslateTransition(Duration.seconds(2.8), mobilSpbu);
+        keluarMobil.setFromX(mobilSpbu.getTranslateX());
+        keluarMobil.setToX(w + lebarMobil + w * 0.10 - mobilSpbu.getLayoutX());
+        keluarMobil.setInterpolator(Interpolator.EASE_IN);
+        keluarMobil.setDelay(Duration.seconds(0.8));
+        keluarMobil.play();
+        trackAnimasi(keluarMobil);
+    }
+
+    /** Akhir cerita: seluruh panggung fade out ke hitam, tulisan muncul di tengah. */
+    private void akhiriDenganFade() {
+        setCaption(" ");
+
+        // Lapis hitam menutup panggung — di bawah UI (judul/caption/tombol)
+        lapisHitam = new Pane();
+        lapisHitam.setStyle("-fx-background-color: #000000;");
+        lapisHitam.setMouseTransparent(true);
+        lapisHitam.setOpacity(0);
+        lapisHitam.prefWidthProperty().bind(overlay.widthProperty());
+        lapisHitam.prefHeightProperty().bind(overlay.heightProperty());
+        getChildren().add(1, lapisHitam);
+        FadeTransition gelap = new FadeTransition(Duration.seconds(1.8), lapisHitam);
+        gelap.setFromValue(0);
+        gelap.setToValue(1);
+        gelap.play();
+        trackAnimasi(gelap);
+
+        // Tulisan di tengah layar: "Cerita Berakhir"
+        Label judulAkhir = new Label("Cerita Berakhir");
+        judulAkhir.setFont(Font.font(FONT_MAIN, FontWeight.BOLD, 46));
+        judulAkhir.setTextFill(Color.WHITE);
+        Label subAkhir = new Label("Satu aksi isiBensin() — dua bentuk perilaku. Itulah polimorfisme.");
+        subAkhir.setFont(Font.font(FONT_MAIN, FontWeight.NORMAL, 16));
+        subAkhir.setTextFill(Color.web("#b9c2cc"));
+        teksAkhir = new VBox(12, judulAkhir, subAkhir);
+        teksAkhir.setAlignment(Pos.CENTER);
+        teksAkhir.setOpacity(0);
+        teksAkhir.setMouseTransparent(true);
+        StackPane.setAlignment(teksAkhir, Pos.CENTER);
+        getChildren().add(teksAkhir);
+
+        gelap.setOnFinished(e -> {
+            FadeTransition munculTeks = new FadeTransition(Duration.millis(900), teksAkhir);
+            munculTeks.setFromValue(0);
+            munculTeks.setToValue(1);
+            munculTeks.play();
+            trackAnimasi(munculTeks);
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // BALON UCAPAN (gelembung rapi digambar JavaFX) & PROGRESS BAR
+    // ══════════════════════════════════════════════════════════
+
+    /**
+     * Balon ucapan bergaya bersih: gelembung putih membulat + ekor kecil
+     * menunjuk ke pembicara, teks tebal rapi, bayang lembut — muncul di
+     * atas kepala acuan lalu menghilang sendiri.
+     */
+    private void tampilkanBalon(String teks, ImageView acuan) {
+        Label isi = new Label(teks);
+        isi.setFont(Font.font(FONT_MAIN, FontWeight.BOLD, 18));
+        isi.setTextFill(Color.web("#22262b"));
+
+        StackPane gelembung = new StackPane(isi);
+        gelembung.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.97);" +
+                        "-fx-background-radius: 20;" +
+                        "-fx-padding: 10 22 10 22;");
+
+        // ekor balon: segitiga kecil di bawah gelembung (di belakang,
+        // menyatu tanpa garis karena warna sama)
+        Polygon ekor = new Polygon(0, 0, 26, 0, 9, 18);
+        ekor.setFill(Color.rgb(255, 255, 255, 0.97));
+
+        Group balon = new Group(ekor, gelembung);
+        balon.setMouseTransparent(true);
+        balon.setEffect(new DropShadow(BlurType.GAUSSIAN,
+                Color.rgb(0, 0, 0, 0.30), 12, 0.15, 0, 4));
         balon.setOpacity(0);
+
+        Double rasioAcuan = rasioLebar(acuan);
+        gelembung.layoutXProperty().bind(
+                acuan.layoutXProperty()
+                        .add(acuan.translateXProperty())
+                        .add(acuan.fitHeightProperty()
+                                .multiply(rasioAcuan == null ? 0 : rasioAcuan)
+                                .divide(2))
+                        .subtract(gelembung.widthProperty().divide(2)));
+        gelembung.layoutYProperty().bind(
+                acuan.layoutYProperty()
+                        .add(acuan.translateYProperty())
+                        .subtract(gelembung.heightProperty()).subtract(18));
+        ekor.layoutXProperty().bind(
+                gelembung.layoutXProperty()
+                        .add(gelembung.widthProperty().divide(2)).subtract(9));
+        ekor.layoutYProperty().bind(
+                gelembung.layoutYProperty()
+                        .add(gelembung.heightProperty()).subtract(3));
+
         adegan.getChildren().add(balon);
         FadeTransition masuk = new FadeTransition(Duration.millis(250), balon);
         masuk.setFromValue(0);
