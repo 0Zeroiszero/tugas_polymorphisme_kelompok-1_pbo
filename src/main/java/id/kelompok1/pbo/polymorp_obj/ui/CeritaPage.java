@@ -374,6 +374,23 @@ public class CeritaPage extends StackPane {
     }
 
     /**
+     * Progresi sequence SEKALI JALAN: frame idle -> frame terakhir, lalu pose
+     * terakhir DITAHAN (tidak berulang) — gerakan kendaraan jadi konsisten
+     * dari seq idle sampai keluar frame.
+     */
+    private Timeline progresSeq(ImageView target, Image[] frame, double msPerFrame) {
+        Timeline t = new Timeline();
+        for (int i = 0; i < frame.length; i++) {
+            final Image f = frame[i];
+            t.getKeyFrames().add(new KeyFrame(Duration.millis(msPerFrame * i),
+                    e -> target.setImage(f)));
+        }
+        t.play();
+        track(t);
+        return t;
+    }
+
+    /**
      * Gerak melintas horizontal MENGGUNAKAN translateX (aman untuk sprite
      * yang layoutX-nya di-bind maupun tidak). Jarak dalam piksel.
      */
@@ -663,8 +680,8 @@ public class CeritaPage extends StackPane {
 
     private void adeganJalan() {
         gantiAdegan(
-                "Adegan 3 — Di jalan raya, pengendara motor melaju kencang "
-                        + "disusul mobil sport sesudahnya.",
+                "Adegan 3 — Di jalan raya, pengendara motor melaju kencang; "
+                        + "sesudahnya mobil sport melintas dari arah seberang.",
                 this::bangunAdeganJalan);
     }
 
@@ -686,35 +703,37 @@ public class CeritaPage extends StackPane {
         jadwal(
                 new double[]{ 0.4, 0.9, 4.6, 5.0, 9.2 },
                 new Runnable[]{
-                        // motor melaju kencang dari kiri ke kanan (jalur utama)
+                        // motor melaju dari kiri ke kanan: seq idle -> seq akhir,
+                        // pose terakhir DITAHAN sampai keluar frame (konsisten)
                         () -> {
                             ImageView motor = spriteLaju("motor-seq-1.png", 0.30, 0.88, false);
                             motor.setLayoutX(-w * 0.30);
                             adegan.getChildren().add(motor);
-                            siklusFrame(motor, seqMotor, 140);
+                            progresSeq(motor, seqMotor, 700);
                             bobbing(motor, 4, 280);
                             melintas(motor, w * 1.65, 3.6);
                             mainkanLoop("motor.wav");
                         },
-                        // motor kedua di jalur jauh — menambah kesan ramai
+                        // motor kedua di jalur atas — ARAH SAMA, tidak mundur
                         () -> {
                             ImageView motorJauh = spriteLaju("motor-seq-2.png",
-                                    0.18, 0.70, true);
+                                    0.18, 0.70, false);
                             motorJauh.setLayoutX(-w * 0.25);
                             motorJauh.setOpacity(0.92);
                             adegan.getChildren().add(motorJauh);
-                            siklusFrame(motorJauh, seqMotor, 160);
+                            progresSeq(motorJauh, seqMotor, 800);
                             melintas(motorJauh, w * 1.55, 4.6);
                         },
                         // motor utama sudah lewat: suara motor berhenti
                         () -> hentikanSuara("motor.wav"),
-                        // mobil melintas sesudah motor (dekat, jalur bawah)
+                        // mobil menghadap KIRI, jadi melintas dari KANAN agar
+                        // gerakannya MAJU; posisi tepat DI BADAN JALAN RAYA
                         () -> {
-                            ImageView mobil = spriteLaju("mobil-seq-1.png", 0.24, 0.97, false);
-                            mobil.setLayoutX(-w * 0.35);
+                            ImageView mobil = spriteLaju("mobil-seq-1.png", 0.20, 0.90, false);
+                            mobil.setLayoutX(w * 1.02);
                             adegan.getChildren().add(mobil);
-                            siklusFrame(mobil, seqMobil, 150);
-                            melintas(mobil, w * 1.75, 3.4);
+                            progresSeq(mobil, seqMobil, 700);
+                            melintas(mobil, -w * 1.45, 3.4);
                             mainkanLoop("porsche.wav");
                         },
                         // mobil sudah lewat: suara berhenti
@@ -735,8 +754,8 @@ public class CeritaPage extends StackPane {
 
     private void adeganSpbu() {
         gantiAdegan(
-                "Adegan 4 — Kedua kendaraan masuk SPBU. Pengendara turun dari motor "
-                        + "dan mengisi bensin secara self-service.",
+                "Adegan 4 — Kedua kendaraan masuk SPBU. Pengendara turun dan berdiri "
+                        + "di samping pom, mengisi bensin secara self-service.",
                 this::bangunAdeganSpbu);
     }
 
@@ -758,8 +777,9 @@ public class CeritaPage extends StackPane {
 
         motorSpbu = spriteLaju("motor-diam.png", 0.26, 0.94, false);
         motorSpbu.setLayoutX(-w * 0.30 - setengahMotor);
+        // mobil MENGHADAP KIRI, jadi masuk dari KANAN agar gerakannya MAJU
         mobilSpbu = spriteLaju("mobil-diam.png", 0.22, 0.96, false);
-        mobilSpbu.setLayoutX(-w * 0.45 - setengahMobil);
+        mobilSpbu.setLayoutX(w * 1.02);
         adegan.getChildren().addAll(motorSpbu, mobilSpbu);
 
         double berhentiMotor = w * 0.24;
@@ -773,7 +793,7 @@ public class CeritaPage extends StackPane {
 
         TranslateTransition masukMobil = new TranslateTransition(Duration.seconds(2.6), mobilSpbu);
         masukMobil.setFromX(0);
-        masukMobil.setToX(berhentiMobil - (-w * 0.45));
+        masukMobil.setToX(berhentiMobil - w * 1.02 - setengahMobil);
         masukMobil.setInterpolator(Interpolator.EASE_OUT);
         masukMobil.setDelay(Duration.seconds(0.4));
         masukMobil.play();
@@ -781,35 +801,17 @@ public class CeritaPage extends StackPane {
 
         // ── Jadwal internal adegan 4 ──────────────────────────
         jadwal(
-                new double[]{ 3.4, 4.2, 4.8 },
+                new double[]{ 3.4, 4.8 },
                 new Runnable[]{
-                        // pengendara TURUN dari motor, lalu mengambil nozzle
+                        // pengendara TURUN dari motor (motor jadi kosong),
+                        // lalu berdiri tegak DI SAMPING POM SPBU-nya
                         () -> {
                             motorSpbu.setImage(gambar("motor.png"));
-                            ImageView pengisi = spriteLaju("pengendara-isi-motor.png",
-                                    0.23, 0.94, false);
-                            pengisi.layoutXProperty().bind(
-                                    motorSpbu.layoutXProperty()
-                                            .add(motorSpbu.translateXProperty())
-                                            .add(overlay.widthProperty().multiply(0.09)));
-                            pengisi.setOpacity(0);
-                            adegan.getChildren().add(pengisi);
-                            fadeMuncul(pengisi);
-                            // kartu adegan self-service (gambar generate) singkat
-                            tampilkanKartu("kartu-isi-motor.png", true);
-                        },
-                        // mobil juga diisi — proses sama, self-service
-                        () -> {
-                            ImageView pengisiMobil = spriteLaju("pengendara-isi-mobil.png",
-                                    0.15, 0.96, false);
-                            pengisiMobil.layoutXProperty().bind(
-                                    mobilSpbu.layoutXProperty()
-                                            .add(mobilSpbu.translateXProperty())
-                                            .subtract(overlay.widthProperty().multiply(0.09)));
-                            pengisiMobil.setOpacity(0);
-                            adegan.getChildren().add(pengisiMobil);
-                            fadeMuncul(pengisiMobil);
-                            tampilkanKartu("kartu-isi-mobil.png", false);
+                            ImageView pemotor = spriteTetap("pemotor-tegak.png",
+                                    0.26, 0.44, 0.975, false);
+                            pemotor.setOpacity(0);
+                            adegan.getChildren().add(pemotor);
+                            fadeMuncul(pemotor);
                         },
                         // KEDUA pengisian berjalan BERSAMAAN (proses sama)
                         () -> {
@@ -823,48 +825,6 @@ public class CeritaPage extends StackPane {
                 }
         );
         // struk ditampilkan jadwal utama (detik ke-49.5), setelah pengisian selesai
-    }
-
-    /** Kartu adegan hasil gambar generate: muncul di pojok atas, lalu hilang. */
-    private void tampilkanKartu(String file, boolean pojokKanan) {
-        ImageView kartu = new ImageView(gambar(file));
-        kartu.setPreserveRatio(true);
-        kartu.setSmooth(true);
-        kartu.setMouseTransparent(true);
-        kartu.fitHeightProperty().bind(adegan.heightProperty().multiply(0.30));
-        Double rasio = rasioLebar(kartu);
-        if (pojokKanan) {
-            kartu.layoutXProperty().bind(adegan.widthProperty().multiply(0.985)
-                    .subtract(kartu.fitHeightProperty()
-                            .multiply(rasio == null ? 0.7 : rasio)));
-        } else {
-            kartu.layoutXProperty().bind(adegan.widthProperty().multiply(0.015));
-        }
-        kartu.layoutYProperty().bind(adegan.heightProperty().multiply(0.10));
-        kartu.setStyle(
-                "-fx-background-color: rgba(255,255,255,0.9);" +
-                        "-fx-background-radius: 10;" +
-                        "-fx-padding: 4;" +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 16, 0.2, 0, 5);");
-        kartu.setOpacity(0);
-        adegan.getChildren().add(kartu);
-
-        FadeTransition masuk = new FadeTransition(Duration.millis(400), kartu);
-        masuk.setFromValue(0);
-        masuk.setToValue(1);
-        masuk.play();
-        trackAnimasi(masuk);
-
-        Timeline tahan = new Timeline(new KeyFrame(Duration.seconds(3.2), e -> {
-            FadeTransition keluar = new FadeTransition(Duration.millis(450), kartu);
-            keluar.setFromValue(1);
-            keluar.setToValue(0);
-            keluar.setOnFinished(ev -> adegan.getChildren().remove(kartu));
-            keluar.play();
-            trackAnimasi(keluar);
-        }));
-        tahan.play();
-        track(tahan);
     }
 
     private void fadeMuncul(Node n) {
