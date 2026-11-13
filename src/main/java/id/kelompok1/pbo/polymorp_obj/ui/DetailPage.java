@@ -235,8 +235,8 @@ public class DetailPage extends StackPane {
         );
         btnBack.setCursor(Cursor.HAND);
         btnBack.setOnAction(e -> {
-            stopSound();
-            stopVehicle();// ← lepas MediaPlayer sebelum keluar
+            if (soundPath != null) stopSound();
+            stopVehicle();
             onBack.run();
         });
         StackPane.setAlignment(btnBack, Pos.TOP_LEFT);
@@ -580,8 +580,8 @@ public class DetailPage extends StackPane {
 
         bIsiBensin.setOnAction(e -> {
             hideSubmenu.run();
-            stopSound();
-            stopVehicle();// ← lepas MediaPlayer agar tidak lock file
+            if (soundPath != null) stopSound();
+            stopVehicle();
             onIsiBensin.run();
         });
 
