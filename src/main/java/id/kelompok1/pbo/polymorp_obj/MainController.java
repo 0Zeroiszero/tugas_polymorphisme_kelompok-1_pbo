@@ -270,8 +270,8 @@ public class MainController {
     }
 
     private void bukaDetailKendaraan(String jenis, String fileGambar, String fileKendaraan) {
-        // Suara berbeda untuk Mobil dan Motor
-        String fileSuara = jenis.equals("Mobil") ? "porsche.wav" : "motor.wav";
+        // Mobil tidak memutar audio; suara hanya tersedia untuk Motor.
+        String fileSuara = jenis.equals("Mobil") ? null : "motor.wav";
 
         DetailPage detail = new DetailPage(fileGambar, fileSuara, this::tampilkanLanding);
 
