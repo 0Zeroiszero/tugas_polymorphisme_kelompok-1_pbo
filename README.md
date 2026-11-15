@@ -9,15 +9,16 @@ Objek: dua class abstrak (`Hewan` dan `Kendaraan`) dengan implementasi
 1. **Menu Class Hewan** — detail `Kucing` dan `Burung` (bersuara & informasi).
 2. **Menu Class Kendaraan** — detail `Mobil` dan `Motor`
    (bergerak, isi bensin, informasi).
-3. **Menu Isi Bensin** — progress bar pengisian tiap kendaraan.
+3. **Menu Isi Bensin** — progress bar pengisian **dalam liter** (Motor 10 L,
+   Mobil 40 L) dengan efek suara `water-pour.wav`.
 4. **Alur Cerita (fitur baru)** — satu tombol, satu frame, satu kisah utuh:
 
    | Adegan | Isi |
    |--------|-----|
-   | 1. Taman | Kucing berjalan-jalan (animasi 4 frame + 5 kucing duplikat), rumput bergoyang (gambar generate diayunkan pada poros pangkalnya), kucing mengeong sekali (suara + balon "Meong!") |
-   | 2. Burung | Burung cuit-cuit (suara + balon), 6 burung duplikat di bawahnya, burung mencoba terbang (3 gambar sequence) lalu terbang pergi |
-   | 3. Jalan Raya | Motor melaju kencang (3 gambar sequence + suara `motor.wav`), disusul mobil (3 gambar sequence + suara `porsche.wav`) |
-   | 4. SPBU | Pengendara turun dari motor, mengisi bensin **self-service** bersama mobil (2 progress bar), lalu **struk bukti bayar** ditampilkan sebagai gambar hasil generate |
+   | 1. Taman | Kucing-kucing duduk dan berjalan-jalan (animasi + balon "Meong!"), burung-burung berkicau di rumput dan dahan, lalu beberapa burung terbang melintas; suara kucing/burung bersahutan |
+   | 2. Burung | Kawanan burung berkicau ramai di dahan dan rerumputan, burung mencoba terbang (3 gambar sequence), lalu seluruh kawanan terbang bersama |
+   | 3. Jalan Raya | Ramai kendaraan: motor melintas di **jalur atas** (kiri→kanan) dan mobil sport di **jalur bawah** (kanan→kiri), berlawanan arah; suara `motor.wav` + `porsche.wav` |
+   | 4. SPBU | Pengendara berdiri di samping motor, mengisi bensin **self-service** dalam liter bersama mobil (2 progress bar + `water-pour.wav`), struk pembayaran muncul, lalu saat berangkat motor dan mobil melaju dengan `motor-slowing-and-brake-sound.wav` dan `car-slow-down.wav` |
 
    Kontrol: `Kembali`, `Lewati ke SPBU`, dan `Putar Ulang`.
 
@@ -50,7 +51,9 @@ src/main/java/id/kelompok1/pbo/polymorp_obj/
 src/main/resources/id/kelompok1/pbo/polymorp_obj/
 ├── gambar/          Aset latar & sprite
 ├── gambar/cerita/   Aset alur cerita (sprite sequence, rumput, balon, struk)
-└── sounds/          kucing.wav, burung.wav, motor.wav, porsche.wav
+└── sounds/          kucing*.wav, burung*.wav, motor.wav, porsche.wav,
+                     water-pour.wav, motor-slowing-and-brake-sound.wav,
+                     car-slow-down.wav (RMS seragam ±-26 dBFS)
 ```
 
 ## Catatan Aset

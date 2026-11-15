@@ -1,5 +1,6 @@
 package id.kelompok1.pbo.polymorp_obj.ui;
 
+import id.kelompok1.pbo.polymorp_obj.util.SoundManager;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -13,11 +14,15 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 
 public class IsiBensinPage extends StackPane {
 
     private static final String IMG_BASE = "/id/kelompok1/pbo/polymorp_obj/gambar/";
+    private static final String SOUND_BASE = "/id/kelompok1/pbo/polymorp_obj/sounds/";
     private static final String FONT_MAIN = "Poppins";
 
     private final DoubleProperty progress = new SimpleDoubleProperty(0);
@@ -27,6 +32,7 @@ public class IsiBensinPage extends StackPane {
                          String fileKendaraan,
                          String jenis,
                          String fuelType,
+                         double liter,
                          Runnable onBack) {
 
         // ── Background SPBU ─────────────────────────────────
@@ -50,7 +56,7 @@ public class IsiBensinPage extends StackPane {
         vehicle.fitHeightProperty().bind(overlay.heightProperty().multiply(0.6));
 
         // ── SESUAIKAN POSISI KENDARAAN DI SINI ──────────────
-        vehicle.layoutXProperty().bind(overlay.widthProperty().multiply(0.10));
+        vehicle.layoutXProperty().bind(overlay.widthProperty().multiply(0.08));
         vehicle.layoutYProperty().bind(
                 overlay.heightProperty().multiply(1.1)
                         .subtract(vehicle.fitHeightProperty()));
@@ -59,13 +65,17 @@ public class IsiBensinPage extends StackPane {
         overlay.getChildren().add(vehicle);
 
         // ── Panel progress ──────────────────────────────────
-        VBox panel = buatPanel(jenis, fuelType);
+        VBox panel = buatPanel(jenis, fuelType, liter);
+
+        // Suara kendaraan mengerem sebelum pengisian dimulai
+        String soundKendaraan = jenis.equals("Mobil")
+                ? "car-slow-down.wav" : "motor-slowing-and-brake-sound.wav";
 
         // ── Tombol kembali ──────────────────────────────────
         Button btnBack = new Button("← Kembali");
         btnBack.setStyle(
                 "-fx-font-family: '" + FONT_MAIN + "';" +
-                        "-fx-background-color: rgba(255, 255, 255, 0.9);" +
+                        "-fx-background-color: rgba(255, 255, 255, 0.95);" +
                         "-fx-text-fill: #2b2b2b;" +
                         "-fx-font-weight: 600;" +
                         "-fx-font-size: 14px;" +
@@ -77,11 +87,13 @@ public class IsiBensinPage extends StackPane {
         btnBack.setCursor(Cursor.HAND);
         btnBack.setOnAction(e -> {
             if (fillTimeline != null) fillTimeline.stop();
+            SoundManager.stop(SOUND_BASE + soundKendaraan);
+            SoundManager.stop(SOUND_BASE + "water-pour.wav");
             onBack.run();
         });
 
-        StackPane.setAlignment(panel, Pos.TOP_CENTER);
-        StackPane.setMargin(panel, new Insets(40, 0, 0, 0));
+        StackPane.setAlignment(panel, Pos.CENTER_RIGHT);
+        StackPane.setMargin(panel, new Insets(0, 48, 0, 0));
         StackPane.setAlignment(btnBack, Pos.TOP_LEFT);
         StackPane.setMargin(btnBack, new Insets(20));
 
@@ -89,47 +101,47 @@ public class IsiBensinPage extends StackPane {
         // lalu panel, lalu tombol kembali
         getChildren().addAll(overlay, panel, btnBack);
 
-        // ── Animasi isi bensin: 0% → 100% ───────────────────
+        // ── Animasi isi bensin: kendaraan mengerem, lalu 0 liter → penuh ──
+        SoundManager.playOnce(SOUND_BASE + soundKendaraan);
         fillTimeline = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(progress, 0.0)),
-                new KeyFrame(Duration.seconds(3), new KeyValue(progress, 1.0))
+                new KeyFrame(Duration.ZERO,
+                        e -> SoundManager.playOnce(SOUND_BASE + "water-pour.wav"),
+                        new KeyValue(progress, 0.0)),
+                new KeyFrame(Duration.seconds(4), new KeyValue(progress, 1.0))
         );
-        fillTimeline.setDelay(Duration.millis(600));
+        fillTimeline.setDelay(Duration.seconds(1.2));
         fillTimeline.play();
     }
 
-    private VBox buatPanel(String jenis, String fuelType) {
+    private VBox buatPanel(String jenis, String fuelType, double liter) {
         VBox panel = new VBox(10);
-        panel.setAlignment(Pos.CENTER);
-        panel.setPadding(new Insets(14, 24, 14, 24));    // ← lebih tipis
-        panel.setMaxWidth(360);                           // ← batasi lebar panel
+        panel.setAlignment(Pos.CENTER_LEFT);
+        panel.setPadding(new Insets(20, 24, 20, 24));
+        panel.setMaxWidth(340);
         panel.setMaxHeight(Region.USE_PREF_SIZE);
         panel.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.95);" +
-                        "-fx-background-radius: 16;" +
-                        "-fx-border-color: rgba(0, 0, 0, 0.10);" +
-                        "-fx-border-radius: 16;" +
+                "-fx-background-color: rgba(255, 255, 255, 0.97);" +
+                        "-fx-background-radius: 18;" +
+                        "-fx-border-color: rgba(0, 0, 0, 0.12);" +
+                        "-fx-border-radius: 18;" +
                         "-fx-border-width: 1;" +
-                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 16, 0.2, 0, 5);"
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 22, 0.2, 0, 8);"
         );
 
-        Label judul = new Label("⛽  Mengisi Bahan Bakar");
-        judul.setStyle(
-                "-fx-font-family: '" + FONT_MAIN + "';" +
-                        "-fx-font-size: 15px;" +                      // ← dari 20px
-                        "-fx-font-weight: 700;" +
-                        "-fx-text-fill: #1a1a1a;"
-        );
+        Label kicker = new Label("SPBU  •  SELF-SERVICE");
+        kicker.setFont(Font.font(FONT_MAIN, FontWeight.BOLD, 11));
+        kicker.setTextFill(Color.web("#ef6c00"));
+
+        Label judul = new Label("Mengisi Bahan Bakar");
+        judul.setFont(Font.font(FONT_MAIN, FontWeight.BOLD, 20));
+        judul.setTextFill(Color.web("#1a1a1a"));
 
         Label sub = new Label(jenis + "  •  " + fuelType);
-        sub.setStyle(
-                "-fx-font-family: '" + FONT_MAIN + "';" +
-                        "-fx-font-size: 11px;" +                      // ← dari 13px
-                        "-fx-text-fill: #666;"
-        );
+        sub.setFont(Font.font(FONT_MAIN, FontWeight.SEMI_BOLD, 13));
+        sub.setTextFill(Color.web("#5f6368"));
 
-        double barWidth = 260;                            // ← dari 380
-        double barHeight = 14;                            // ← dari 22
+        double barWidth = 292;
+        double barHeight = 16;
 
         Region bgBar = new Region();
         bgBar.setPrefSize(barWidth, barHeight);
@@ -140,39 +152,48 @@ public class IsiBensinPage extends StackPane {
                         "-fx-background-radius: " + (barHeight / 2) + ";"
         );
 
-        // Background bar (pakai HBox langsung)
-        HBox barStack = new HBox();
+        Pane barStack = new Pane();
         barStack.setPrefSize(barWidth, barHeight);
+        barStack.setMinSize(barWidth, barHeight);
         barStack.setMaxSize(barWidth, barHeight);
-        barStack.setAlignment(Pos.CENTER_LEFT);
-        barStack.setStyle(
-                "-fx-background-color: rgba(0,0,0,0.10);" +
-                        "-fx-background-radius: " + (barHeight / 2) + ";"
-        );
 
-// Isi bar
         Region fillBar = new Region();
         fillBar.setPrefHeight(barHeight);
+        fillBar.setMinHeight(barHeight);
+        fillBar.setMaxHeight(barHeight);
         fillBar.prefWidthProperty().bind(progress.multiply(barWidth));
         fillBar.setStyle(
                 "-fx-background-color: linear-gradient(to right, #66bb6a, #2e7d32);" +
                         "-fx-background-radius: " + (barHeight / 2) + ";"
         );
 
-        barStack.getChildren().add(fillBar);
+        barStack.getChildren().addAll(bgBar, fillBar);
 
-        Label persen = new Label("0%");
-        persen.setStyle(
-                "-fx-font-family: '" + FONT_MAIN + "';" +
-                        "-fx-font-size: 20px;" +                      // ← dari 28px
-                        "-fx-font-weight: 700;" +
-                        "-fx-text-fill: #2e7d32;"
-        );
+        Label literLabel = new Label("0,0 liter");
+        literLabel.setFont(Font.font(FONT_MAIN, FontWeight.BOLD, 30));
+        literLabel.setTextFill(Color.web("#2e7d32"));
+
+        Label kapasitas = new Label("dari " + formatLiter(liter) + " liter");
+        kapasitas.setFont(Font.font(FONT_MAIN, FontWeight.NORMAL, 13));
+        kapasitas.setTextFill(Color.web("#5f6368"));
+
+        HBox barisLiter = new HBox(10, literLabel, kapasitas);
+        barisLiter.setAlignment(Pos.BASELINE_LEFT);
+
+        Label harga = new Label("Rp 13.900 / liter");
+        harga.setFont(Font.font(FONT_MAIN, FontWeight.SEMI_BOLD, 12));
+        harga.setTextFill(Color.web("#5f6368"));
 
         progress.addListener((obs, old, val) ->
-                persen.setText(String.format("%.0f%%", val.doubleValue() * 100)));
+                literLabel.setText(String.format("%.1f liter", val.doubleValue() * liter)));
 
-        panel.getChildren().addAll(judul, sub, barStack, persen);
+        panel.getChildren().addAll(kicker, judul, sub, barStack, barisLiter, harga);
         return panel;
+    }
+
+    private static String formatLiter(double liter) {
+        return liter == Math.rint(liter)
+                ? String.format("%.0f", liter)
+                : String.format("%.1f", liter);
     }
 }

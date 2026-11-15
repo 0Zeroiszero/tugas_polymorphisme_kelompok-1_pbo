@@ -7,4 +7,7 @@ public abstract class Kendaraan {
 
     /** Perilaku: bagaimana kendaraan ini mengisi bahan bakar. */
     public abstract String isiBensin();
+
+    /** Kapasitas tangki dalam liter (dipakai animasi pengisian). */
+    public abstract double kapasitasLiter();
 }
