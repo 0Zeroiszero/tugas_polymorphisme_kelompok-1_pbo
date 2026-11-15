@@ -14,8 +14,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 import javafx.animation.PauseTransition;
 import javafx.animation.SequentialTransition;
@@ -186,32 +184,7 @@ public class DetailPage extends StackPane {
                         "-fx-background-color: #f0f0f0;"
         );
 
-        // ── MediaPlayer untuk suara ───────────────────────────
-        MediaPlayer created = null;
-        if (fileSuara != null) {
-            try {
-                java.net.URL soundResource = getClass().getResource(SOUND_BASE + fileSuara);
-                System.out.println("[SOUND] Load: " + SOUND_BASE + fileSuara);
-                System.out.println("[SOUND] URL : " + soundResource);
-
-                if (soundResource != null) {
-                    Media media = new Media(soundResource.toExternalForm());
-                    created = new MediaPlayer(media);
-
-                    final MediaPlayer fp = created;
-                    created.setOnError(() ->
-                            System.err.println("[SOUND] ERROR: " + fp.getError()));
-                    created.setOnReady(() ->
-                            System.out.println("[SOUND] READY, durasi " + media.getDuration()));
-                    System.out.println("[SOUND] MediaPlayer dibuat");
-                } else {
-                    System.err.println("[SOUND] resource NULL");
-                }
-            } catch (Exception e) {
-                System.err.println("[SOUND] Exception: " + e);
-                e.printStackTrace();
-            }
-        }
+        // ── Path suara (diputar lewat SoundManager saat diminta) ──
         this.soundPath = (fileSuara != null)
                 ? SOUND_BASE + fileSuara
                 : null;

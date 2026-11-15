@@ -10,4 +10,9 @@ public class Mobil extends Kendaraan {
     public String isiBensin() {
         return "mengisi Pertamax 92 sebanyak 40 liter di SPBU";
     }
+
+    @Override
+    public double kapasitasLiter() {
+        return 40;
+    }
 }

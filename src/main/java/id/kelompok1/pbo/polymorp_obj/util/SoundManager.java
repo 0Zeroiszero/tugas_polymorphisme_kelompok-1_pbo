@@ -5,34 +5,51 @@ import javafx.scene.media.MediaPlayer;
 import javafx.util.Duration;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Cache MediaPlayer per path agar file audio tidak di-lock berulang kali.
- * MediaPlayer hanya dibuat sekali untuk setiap file.
+ * Cache Media/MediaPlayer per path agar file audio tidak di-lock berulang kali.
+ * Efek satu-kali bisa tumpang tindih (mis. banyak kucing/burung berbunyi).
  */
 public class SoundManager {
 
+    private static final Map<String, Media> MEDIA = new HashMap<>();
     private static final Map<String, MediaPlayer> CACHE = new HashMap<>();
+    private static final List<MediaPlayer> EFEK = new ArrayList<>();
 
     /** Ambil MediaPlayer dari cache, atau buat baru jika belum ada. */
     public static MediaPlayer get(String resourcePath) {
         if (resourcePath == null) return null;
         return CACHE.computeIfAbsent(resourcePath, path -> {
             try {
-                URL url = SoundManager.class.getResource(path);
-                if (url == null) {
-                    System.err.println("[SOUND] Resource NULL: " + path);
-                    return null;
-                }
-                Media media = new Media(url.toExternalForm());
+                Media media = ambilMedia(path);
+                if (media == null) return null;
                 MediaPlayer mp = new MediaPlayer(media);
                 mp.setOnError(() ->
                         System.err.println("[SOUND] Error " + path + ": " + mp.getError()));
                 return mp;
             } catch (Exception e) {
                 System.err.println("[SOUND] Gagal buat MediaPlayer: " + path);
+                e.printStackTrace();
+                return null;
+            }
+        });
+    }
+
+    private static Media ambilMedia(String path) {
+        return MEDIA.computeIfAbsent(path, p -> {
+            try {
+                URL url = SoundManager.class.getResource(p);
+                if (url == null) {
+                    System.err.println("[SOUND] Resource NULL: " + p);
+                    return null;
+                }
+                return new Media(url.toExternalForm());
+            } catch (Exception e) {
+                System.err.println("[SOUND] Gagal buat Media: " + p);
                 e.printStackTrace();
                 return null;
             }
@@ -51,6 +68,31 @@ public class SoundManager {
         } else {
             // Belum siap — antre lewat setOnReady
             mp.setOnReady(() -> startPlay(mp, 1));
+        }
+    }
+
+    /**
+     * Efek satu-kali dengan instance baru, jadi beberapa suara dari file yang
+     * sama bisa berbunyi bersamaan (tidak saling memotong).
+     */
+    public static void playEffect(String path) {
+        Media media = ambilMedia(path);
+        if (media == null) return;
+        try {
+            MediaPlayer mp = new MediaPlayer(media);
+            mp.setVolume(1.0);
+            mp.setCycleCount(1);
+            mp.setOnError(() ->
+                    System.err.println("[SOUND] Error efek " + path + ": " + mp.getError()));
+            mp.setOnEndOfMedia(() -> {
+                EFEK.remove(mp);
+                mp.dispose();
+            });
+            EFEK.add(mp);
+            mp.play();
+        } catch (Exception e) {
+            System.err.println("[SOUND] Gagal play efek: " + path);
+            e.printStackTrace();
         }
     }
 
@@ -86,7 +128,7 @@ public class SoundManager {
         mp.setCycleCount(1);
     }
 
-    /** Hentikan semua suara (dipakai saat keluar aplikasi). */
+    /** Hentikan semua suara (dipakai saat keluar aplikasi / ganti adegan). */
     public static void stopAll() {
         for (MediaPlayer mp : CACHE.values()) {
             if (mp != null) {
@@ -95,5 +137,10 @@ public class SoundManager {
                 mp.setCycleCount(1);
             }
         }
+        for (MediaPlayer mp : new ArrayList<>(EFEK)) {
+            mp.stop();
+            mp.dispose();
+        }
+        EFEK.clear();
     }
 }

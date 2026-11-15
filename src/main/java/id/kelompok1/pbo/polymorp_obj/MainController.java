@@ -303,42 +303,18 @@ public class MainController {
     }
 
     private void bukaIsiBensin(String jenis, String fileGambar, String fileKendaraan) {
-        String fuelType = jenis.equals("Mobil") ? "Pertamax 92" : "Pertalite";
+        Kendaraan kendaraan = jenis.equals("Mobil") ? new Mobil() : new Motor();
 
         IsiBensinPage page = new IsiBensinPage(
                 "spbu.jpeg",
                 fileKendaraan,
                 jenis,
-                fuelType,
+                "Pertamax 92",
+                kendaraan.kapasitasLiter(),
                 () -> bukaDetailKendaraan(jenis, fileGambar, fileKendaraan)
         );
 
         rootPane.getChildren().setAll(page);
-    }
-
-    private void tampilIsiBensin(String jenis) {
-        String pesan;
-
-        if (jenis.equals("Mobil")) {
-            pesan =
-                    "Mobil mengisi bahan bakar:\n\n" +
-                            "    " + new Mobil().isiBensin() + "\n\n" +
-                            "Method isiBensin() di-override oleh Mobil, " +
-                            "sehingga hasilnya berbeda dengan Motor.";
-        } else {
-            pesan =
-                    "Motor mengisi bahan bakar:\n\n" +
-                            "    " + new Motor().isiBensin() + "\n\n" +
-                            "Method isiBensin() di-override oleh Motor, " +
-                            "sehingga hasilnya berbeda dengan Mobil.";
-        }
-
-        Alert a = new Alert(Alert.AlertType.INFORMATION);
-        a.setTitle("Isi Bensin: " + jenis);
-        a.setHeaderText(jenis + " — cara mengisi bahan bakar");
-        a.setContentText(pesan);
-        a.initOwner(rootPane.getScene().getWindow());
-        a.showAndWait();
     }
 
     private void tampilPolimorfismeKendaraan(String jenis) {

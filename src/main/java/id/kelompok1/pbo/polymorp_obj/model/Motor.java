@@ -10,4 +10,9 @@ public class Motor extends Kendaraan {
     public String isiBensin() {
         return "mengisi Pertamax 92 sebanyak 10 liter di SPBU";
     }
+
+    @Override
+    public double kapasitasLiter() {
+        return 10;
+    }
 }
